@@ -45,9 +45,37 @@ def log_direct_interaction(logger, question, context, response_data):
         reasoning = "No structured reasoning provided"
         full_response = response_data
     else:
-        answer = response_data.get("answer", "")
+        answer = response_data.get("llm-answer", "")
         reasoning = response_data.get("reasoning", "No structured reasoning provided")
         full_response = response_data.get("full_response", "")
+        
+        # Handle special case for evaluation data
+        metrics = response_data.get("metrics", {})
+        human_reference = response_data.get("human_reference", "")
+        
+        if metrics:
+            metrics_details = "\n".join([
+                f"Similarity: {metrics.get('similarity', 0):.3f}",
+                f"ROUGE-1: {metrics.get('rouge1', 0):.3f}",
+                f"ROUGE-2: {metrics.get('rouge2', 0):.3f}",
+                f"ROUGE-L: {metrics.get('rougeL', 0):.3f}",
+                f"Question Relevance: {metrics.get('question_relevance', 0):.3f}",
+                f"Context Relevance: {metrics.get('context_relevance', 0):.3f}",
+                f"Final Score: {metrics.get('final_score', 0):.3f}"
+            ])
+            
+            log_entry = (
+                f"\nQuestion: {question}\n"
+                f"Provided Context: {context if context else 'None'}\n"
+                f"Reasoning Steps:\n{reasoning}\n"
+                f"LLM-Answer: {answer}\n"
+                f"Human Reference: {human_reference}\n"
+                f"Evaluation Metrics:\n{metrics_details}\n"
+                f"{'-'*80}"
+            )
+            logger.info(log_entry)
+            return
+    
     log_entry = (
         f"\nQuestion: {question}\n"
         f"Provided Context: {context if context else 'None'}\n"
